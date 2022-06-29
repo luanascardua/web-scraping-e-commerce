@@ -1,7 +1,15 @@
+from email.mime.multipart import MIMEMultipart
 from selenium.webdriver.common.by import By
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from openpyxl.styles import Font
 from openpyxl import Workbook
 from datetime import datetime
+from email import encoders
+import smtplib
+import json
 import re
+import os
 
 
 class Scraping:
@@ -31,12 +39,61 @@ class Scraping:
         print(self.list_nome_phone)
         print(self.list_preco_phone)
 
-    def workbook(self, lines, file='telefones importados.xlsx'):
-        self.wb = Workbook()
-        self.wb.save(file)
-        self.ws = self.wb.active
+    def workbook(self, line, nome, preco, file='telefones importados.xlsx'):
+        self.file = file
+        if not os.path.isfile(self.file):
+            self.wb = Workbook()
+            self.ws = self.wb.active
+            self.wb.save(self.file)
 
-        self.ws.cell(column=1, row=lines).value = ""
-        self.ws.cell(column=2, row=lines).value = ""
-        self.ws.cell(column=2, row=lines).value = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        self.wb.save(file)
+        style_column_name = Font(name='Calibri',
+                    size = 11,
+                    bold = True)
+        a1 = self.ws['A1']
+        b1 = self.ws['B1']
+        c1 = self.ws['C1']
+        a1.font = style_column_name
+        b1.font = style_column_name
+        c1.font = style_column_name
+
+        if  self.ws.cell(column=1, row=1).value == None:
+            self.ws.cell(column=1, row=1).value = 'nome'
+            self.ws.cell(column=2, row=1).value = 'preco'
+            self.ws.cell(column=3, row=1).value = 'horário'
+
+        self.ws.cell(column=1, row=line).value = nome
+        self.ws.cell(column=2, row=line).value = preco
+        self.ws.cell(column=3, row=line).value = datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    def send_email(self, login, password):
+
+        with open('server.json', 'r') as f:
+            server = json.load(f)
+       
+        server = smtplib.SMTP(server['host'], server['port'])
+        server.ehlo()
+        server.starttls()
+        server.login(login, password)
+
+        email_msg = MIMEMultipart()
+        email_msg['From'] = login
+        email_msg['To'] = ''
+        email_msg['Subject'] = 'Test'
+
+        email_msg.attach(MIMEText('', 'html'))
+
+        attachment = open('', 'rb')
+        att = MIMEBase('application', 'octect-stream')
+        att.set_payload(attachment.read())
+        encoders.encode_base64(att)
+
+        att.add_header('Content-Disposition', f'attachment; filename=file.pdf')
+        attachment.close()
+
+        email_msg.attach(att)
+        try:
+            server.sendmail(email_msg['From'], email_msg['To'], email_msg.as_string())
+            server.quit()
+            print('Email successfully sent.')
+        except Exception as e:
+            print(f'ERROR: {e}')
