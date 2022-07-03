@@ -34,3 +34,4 @@ if __name__ == '__main__':
     print('\n', '_' * 80)
     input(f'\tPrograma Finalizado. Aperte {Colors.blue} >> ENTER << {Colors.reset} para fechar o navegador')
     driver.quit()
+ 

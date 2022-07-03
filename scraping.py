@@ -125,3 +125,4 @@ class Scraping:
             print('\nEmail successfully sent.')
         except Exception as e:
             print(f'{Colors.red}ERROR: {Colors.reset}{e}')
+ 
