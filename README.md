@@ -15,7 +15,7 @@
 - [Python](https://www.python.org/)
 - [Selenium](https://www.selenium.dev/pt-br/documentation/)
 
-## How to run progra
+## How to run program
 ```
 python main.py
 ```
