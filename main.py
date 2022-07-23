@@ -1,6 +1,7 @@
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
+import logging
 import os
 
 from scraping import Scraping
@@ -8,6 +9,12 @@ from colors import Colors
 
 if __name__ == '__main__':
 
+    logging.basicConfig(
+        level = logging.DEBUG,
+        format = '%(asctime)s %(name)s %(levelname)s %(message)s',
+        filename = 'log.log',
+        filemode = 'w'
+    )
     os.system('cls')
 
     chrome_options = webdriver.ChromeOptions()

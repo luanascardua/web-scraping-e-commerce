@@ -1,14 +1,15 @@
 from email.mime.multipart import MIMEMultipart
+from openpyxl import Workbook, load_workbook
 from selenium.webdriver.common.by import By
 from PySimpleGUI import PySimpleGUI as sg
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from openpyxl.styles import Font
-from openpyxl import Workbook, load_workbook
 from datetime import datetime
 from email import encoders
 from tqdm import tqdm
 import smtplib
+import logging
 import json
 import re
 import os
@@ -19,6 +20,7 @@ from colors import Colors
 class Scraping:
     
     def __init__(self, driver):
+        self.log = logging.getLogger(__name__)
         self.driver = driver
 
         self.num_pages = By.XPATH, '/html/body/div[5]/div[2]/div[2]/div/div/nav/ul'
@@ -32,6 +34,7 @@ class Scraping:
         pages = re.sub(r'\n', '', pages)
         if '«' in pages:
             pages = str(pages).strip('«').strip('»').strip()
+        self.log.info(f'Número de páginas: {pages}\n')
 
         for page in tqdm (range(1, len(pages))):
             tqdm.write(f'Página: {page}')
@@ -41,6 +44,7 @@ class Scraping:
                 preco_phone = self.driver.find_elements(By.XPATH, f'/html/body/div[5]/div[2]/div[1]/div[{item}]/div/div[2]/ins')
                 self.list_nome_phone.append(nome_phone[0].text)
                 self.list_preco_phone.append(preco_phone[0].text)
+            self.log.info(f'Scrapping da página {page} concluído')
             self.driver.find_element(*self.btn_next).click()
     
     def workbook(self, file='telefones importados.xlsx'):
@@ -49,6 +53,7 @@ class Scraping:
             print('não existe')
             self.wb = Workbook()
             self.wb.save(self.file)
+            self.log.debug(f'Arquivo {self.file} criado\n')
         else:
             self.wb = load_workbook(self.file)
         self.ws = self.wb.active
@@ -85,6 +90,7 @@ class Scraping:
         while True:
             event, self.value = window.read()
             if event == 'enviar':
+                self.log.info(f'\nEMAIL destinatário: {self.value}\n')
                 break
             elif event == sg.WIN_CLOSED:
                 break
@@ -117,12 +123,13 @@ class Scraping:
 
         att.add_header('Content-Disposition', f'attachment; filename={self.file}')
         attachment.close()
-
         email_msg.attach(att)
+        self.log.debug(f'Arquivo {self.file} anexado ao e-mail\n')
         try:
             server.sendmail(email_msg['From'], email_msg['To'], email_msg.as_string())
             server.quit()
+            self.log.debug('Email successfully sent.')
             print('\nEmail successfully sent.')
         except Exception as e:
+            self.log.error(f'Email não aviado. ERRO: {e}')
             print(f'{Colors.red}ERROR: {Colors.reset}{e}')
- 
